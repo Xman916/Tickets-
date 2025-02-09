@@ -1,52 +1,58 @@
-# Prerequisites
-*.d
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
 
-# Object files
-*.o
-*.ko
-*.obj
-*.elf
+void *ticket(void *param); /* threads call this function */
 
-# Linker output
-*.ilk
-*.map
-*.exp
+int c[3]={153, 18, 16};
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 
-# Precompiled Headers
-*.gch
-*.pch
+int main(int argc, char *argv[])
+{
+	pthread_t tid[3]; /* the thread identifier */
+	pthread_attr_t attr[3]; /* set of thread attributes */
+	int i = 0;
+	srand(time(NULL));
+	
+	char agent[3] [10] = {"Buffalo", "Amherst", "Hamburg"};
+	
+	/* set the default attributes of the thread */
+	/* create the thread */
+for (i=0; i<3; i++)
+{
+	pthread_attr_init(&attr[i]);
+	pthread_create(&tid[i], &attr[i], ticket, agent[i]);
+}
+for (i=0; i<3; i++)
+{
+	pthread_join(tid[i],NULL);	
+}
 
-# Libraries
-*.lib
-*.a
-*.la
-*.lo
+}
 
-# Shared objects (inc. Windows DLLs)
-*.dll
-*.so
-*.so.*
-*.dylib
+/*  The thread will execute  in this function */
+void *ticket(void *a) 
+{
+	char *agent_name = (char *) a;
+	int ticketNo;
+	int d;
+	while((c[0] + c[1] + c[2])> 0)
+	{
+		d = rand()%3;
+		ticketNo = rand()%3+1; // 1-3
+		pthread_mutex_lock(&mutex);
+		if(c[d] < ticketNo )
+		{
+			pthread_mutex_unlock(&mutex);
+			continue;
 
-# Executables
-*.exe
-*.out
-*.app
-*.i*86
-*.x86_64
-*.hex
+           }
 
-# Debug files
-*.dSYM/
-*.su
-*.idb
-*.pdb
-
-# Kernel Module Compile Results
-*.mod*
-*.cmd
-.tmp_versions/
-modules.order
-Module.symvers
-Mkfile.old
-dkms.conf
+			c[d]-=ticketNo;
+			printf("%s sold %d tickets of Class %d. Balance: class-0=%d,class-1=%d, class-2=%d\n", agent_name, ticketNo, d, c[0], c[1], c[2]);
+			pthread_mutex_unlock(&mutex);
+			usleep(10000);
+	}
+	pthread_exit(0);
+}
